@@ -113,10 +113,11 @@ const addEmployee = () => {
       }
   },
 ]).then(function(answer) {
-    connection.query("INSERT INTO employee (first_name, last_name) VALUES ?", ({first_name: answer.firstname}, {last_name: answer.lastname}), function (err, data) {
+    let newEmp = {first_name: answer.firstname, last_name: answer.lastname, manager_id: 1, role_id: 1}
+    connection.query("INSERT INTO employee SET ?", newEmp, function (err, data) {
     if (err) throw err;
     console.table(data);
-    searchFunction(); 
+    menu(); 
   })
 })
 }
