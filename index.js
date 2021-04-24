@@ -12,7 +12,7 @@ const connection = mysql.createConnection({
   
     // Be sure to update with your own MySQL password!
     password: 'HuxleyRoslyn4053!',
-    database: 'top_songsDB',
+    database: 'employeesDB',
   });
 
   connection.connect((err) => {
@@ -27,7 +27,7 @@ const connection = mysql.createConnection({
             name: 'options',
             type: 'list',
             message: 'What would you like to do?',
-            choices: ['View Employees','View Employees by Department', 'View Employees by Manager', 'Add Role', 'Add Department', 'Add Employee', 'Update Employee Roles']
+            choices: ['View Employees','View Employees by Department', 'View Roles', 'Add Role', 'Add Department', 'Add Employee', 'Update Employee Roles']
           },
         ])
         .then((answer) => {
@@ -41,8 +41,8 @@ const connection = mysql.createConnection({
               viewDepartment();
               break;
 
-            case 'View Employees by Manager':
-              viewManager();
+            case 'View Roles':
+              viewRole();
               break;
 
             case 'Add Role':
@@ -64,3 +64,59 @@ const connection = mysql.createConnection({
         });
   };
 
+  const viewEmployees = () => {
+    connection.query('SELECT * FROM employee', (err, data) => {
+    if (err) throw err;
+    console.table(data);
+    menu();
+})
+}
+
+const viewDepartment = () => {
+  connection.query('SELECT name FROM department', (err, data) => {
+  if (err) throw err;
+  console.table(data);
+  menu();
+})
+}
+
+const viewRole = () => {
+  connection.query('SELECT title, salary FROM role', (err, data) => {
+  if (err) throw err;
+  console.table(data);
+  menu();
+})
+}
+
+const addEmployee = () => {
+  inquirer.prompt([
+    {
+        type: "input",
+        name: "firstname",
+        message: "Please enter the employee's first name",
+        validate: data => {
+            if(data !== ""){
+                return true
+            }
+            return "Please enter a name."
+        }
+    },
+    {
+      type: "input",
+      name: "lastname",
+      message: "Please enter the employee's last name",
+      validate: data => {
+          if(data !== ""){
+              return true
+          }
+          return "Please enter a name."
+      }
+  },
+]).then(function(answer) {
+    connection.query("INSERT INTO employee (first_name, last_name) VALUES ?", ({first_name: answer.firstname}, {last_name: answer.lastname}), function (err, data) {
+    if (err) throw err;
+    console.table(data);
+    searchFunction(); 
+  })
+})
+}
