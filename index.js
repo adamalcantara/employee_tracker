@@ -2,122 +2,134 @@ const inquirer = require("inquirer");
 const mysql = require("mysql");
 
 const connection = mysql.createConnection({
-    host: 'localhost',
-  
-    // Your port; if not 3306
-    port: 3306,
-  
-    // Your username
-    user: 'root',
-  
-    // Be sure to update with your own MySQL password!
-    password: 'HuxleyRoslyn4053!',
-    database: 'employeesDB',
-  });
+  host: 'localhost',
 
-  connection.connect((err) => {
-    if (err) throw err;
-    menu();
-  });
+  // Your port; if not 3306
+  port: 3306,
 
-  const menu = () => {
-    inquirer
-        .prompt([
-          {
-            name: 'options',
-            type: 'list',
-            message: 'What would you like to do?',
-            choices: ['View Employees','View Employees by Department', 'View Roles', 'Add Role', 'Add Department', 'Add Employee', 'Update Employee Roles']
-          },
-        ])
-        .then((answer) => {
-          console.log(answer.options) 
-          switch (answer.options) {
-            case 'View Employees':
-              viewEmployees();
-              break;
+  // Your username
+  user: 'root',
 
-            case 'View Employees by Department':
-              viewDepartment();
-              break;
+  // Be sure to update with your own MySQL password!
+  password: 'HuxleyRoslyn4053!',
+  database: 'employeesDB',
+});
 
-            case 'View Roles':
-              viewRole();
-              break;
+connection.connect((err) => {
+  if (err) throw err;
+  menu();
+});
 
-            case 'Add Role':
-              addRole();
-              break;
+const menu = () => {
+  inquirer
+    .prompt([
+      {
+        name: 'options',
+        type: 'list',
+        message: 'What would you like to do?',
+        choices: ['View Employees', 'View Employees by Department', 'View Roles', 'Add Role', 'Add Department', 'Add Employee', 'Update Employee Roles']
+      },
+    ])
+    .then((answer) => {
+      console.log(answer.options)
+      switch (answer.options) {
+        case 'View Employees':
+          viewEmployees();
+          break;
 
-            case 'Add Department':
-              addDepartment();
-              break;
+        case 'View Employees by Department':
+          viewDepartment();
+          break;
 
-            case 'Add Employee':
-              addEmployee();
-              break;
+        case 'View Roles':
+          viewRole();
+          break;
 
-            case 'Update Employee Roles':
-              updateRole();
-              break;
-          }
-        });
-  };
+        case 'Add Role':
+          addRole();
+          break;
 
-  const viewEmployees = () => {
-    connection.query('SELECT * FROM employee', (err, data) => {
+        case 'Add Department':
+          addDepartment();
+          break;
+
+        case 'Add Employee':
+          addEmployee();
+          break;
+
+        case 'Update Employee Roles':
+          updateRole();
+          break;
+      }
+    });
+};
+
+const viewEmployees = () => {
+  connection.query('SELECT * FROM employee', (err, data) => {
     if (err) throw err;
     console.table(data);
     menu();
-})
+  })
 }
 
 const viewDepartment = () => {
   connection.query('SELECT name FROM department', (err, data) => {
-  if (err) throw err;
-  console.table(data);
-  menu();
-})
+    if (err) throw err;
+    console.table(data);
+    menu();
+  })
 }
 
 const viewRole = () => {
   connection.query('SELECT title, salary FROM role', (err, data) => {
-  if (err) throw err;
-  console.table(data);
-  menu();
-})
+    if (err) throw err;
+    console.table(data);
+    menu();
+  })
 }
 
 const addEmployee = () => {
-  inquirer.prompt([
-    {
+  connection.query("SELECT * FROM employee", (err, res) => {
+    if (err) throw err;
+    inquirer.prompt([
+      {
         type: "input",
         name: "firstname",
         message: "Please enter the employee's first name",
         validate: data => {
-            if(data !== ""){
-                return true
-            }
-            return "Please enter a name."
-        }
-    },
-    {
-      type: "input",
-      name: "lastname",
-      message: "Please enter the employee's last name",
-      validate: data => {
-          if(data !== ""){
-              return true
+          if (data !== "") {
+            return true
           }
           return "Please enter a name."
-      }
-  },
-]).then(function(answer) {
-    let newEmp = {first_name: answer.firstname, last_name: answer.lastname, manager_id: 1, role_id: 1}
-    connection.query("INSERT INTO employee SET ?", newEmp, function (err, data) {
-    if (err) throw err;
-    console.table(data);
-    menu(); 
-  })
-})
+        }
+      },
+      {
+        type: "input",
+        name: "lastname",
+        message: "Please enter the employee's last name",
+        validate: data => {
+          if (data !== "") {
+            return true
+          }
+          return "Please enter a name."
+        }
+      },
+      {
+        type: "list",
+        name: "manager",
+        message: "Who shall the employee's manager be?",
+        choices: res.map(res => res.id + " " + res.first_name + " " + res.last_name)
+      },
+    ]).then(function (answer) {
+      let newEmp = { first_name: answer.firstname, last_name: answer.lastname, manager_id: answer.manager, role_id: 1 }
+      connection.query("INSERT INTO employee SET ?", newEmp, function (err, data) {
+        if (err) throw err;
+        console.table(data);
+        menu();
+      });
+
+    });
+
+  });
+
 }
