@@ -118,9 +118,18 @@ const addEmployee = () => {
         type: "list",
         name: "manager",
         message: "Who shall the employee's manager be?",
-        choices: res.map(res => res.id + " " + res.first_name + " " + res.last_name)
+        // choices: res.map(res => res.id + " " + res.first_name + " " + res.last_name)
+        choices() {
+          const choiceArray = [];
+          res.forEach(({ first_name }) => {
+            choiceArray.push(first_name);
+          });
+          return choiceArray;
+        },
       },
     ]).then(function (answer) {
+      //manager id needs to equal get id from table where first name equals answer.manager
+      let mgr_id = 'SELECT id FROM employee WHERE '
       let newEmp = { first_name: answer.firstname, last_name: answer.lastname, manager_id: answer.manager, role_id: 1 }
       connection.query("INSERT INTO employee SET ?", newEmp, function (err, data) {
         if (err) throw err;
