@@ -1,6 +1,7 @@
 const inquirer = require("inquirer");
 const mysql = require("mysql");
 
+//Create connection to mysql
 const connection = mysql.createConnection({
   host: 'localhost',
 
@@ -20,6 +21,7 @@ connection.connect((err) => {
   menu();
 });
 
+//Main menu function, called automatically, asks people what they want to do
 const menu = () => {
   inquirer
     .prompt([
@@ -282,7 +284,7 @@ const getRole = () => {
 //Array for departments
 let departmentArray = [];
 
-
+//Get the information from the department table and pass it into the function above
 const getDepartment = () => {
   connection.query('SELECT * FROM department', function (err, res) {
     if (err) throw (err)
