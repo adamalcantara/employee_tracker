@@ -234,13 +234,13 @@ const addEmployee = () => {
 }
 
 //Function to update the role of an employee in the employee table
-const updateRole = () => [
+const updateRole = () => {
   connection.query("SELECT * FROM employee", (err, res) => {
     if (err) throw err;
     inquirer. prompt ([
       {
         type: "list",
-        name: "empupdate",
+        name: "empUpdate",
         message: "Which employee's role would you like to update?",
         choices() {
           const choiceArray = [];
@@ -252,19 +252,19 @@ const updateRole = () => [
       },
       {
         type: "list",
-        name: "newrole",
+        name: "newRole",
         message: "Which role would you like to assign to this employee?",
-        choices: getRole()
+        choices: getUpRole()
       },
     ]).then(function (answer) {
-      let updatedRole = {role_id: answer.empupdate}
-      connection.query("INSERT INTO employee SET ?", updatedRole, function (err, data) {
-        if (err) throw err;
-        viewEmployees();
-      });
+      console.log(answer.newRole);
+      console.log(answer.empUpdate);
+      connection.query("UPDATE employee SET role_id = ? WHERE id = ?", [answer.newRole, answer.empupdate])
+      .then (viewEmployees())
     });
+  
   })
-]
+}
 
 //Array for roles
 let rolesArray = [];
@@ -278,6 +278,18 @@ const getRole = () => {
     }
   })
   return rolesArray;
+}
+
+let updatedRolesArray = [];
+
+const getUpRole = () => {
+  connection.query('SELECT * FROM role', function (err, res) {
+    if (err) throw (err)
+    res.forEach(({ title, id }) => {
+      updatedRolesArray.push({name: title, value: id});
+    });
+  })
+  return updatedRolesArray;
 }
 
 
