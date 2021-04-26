@@ -68,6 +68,7 @@ const menu = () => {
     });
 };
 
+//Function to view the employees
 const viewEmployees = () => {
   connection.query('SELECT * FROM employee', (err, data) => {
     if (err) throw err;
@@ -76,6 +77,7 @@ const viewEmployees = () => {
   })
 }
 
+//Function to view the departments
 const viewDepartment = () => {
   connection.query('SELECT name FROM department', (err, data) => {
     if (err) throw err;
@@ -84,6 +86,7 @@ const viewDepartment = () => {
   })
 }
 
+//Function to view the roles
 const viewRole = () => {
   connection.query('SELECT id, title, salary, department_id FROM role', (err, data) => {
     if (err) throw err;
@@ -92,6 +95,7 @@ const viewRole = () => {
   })
 }
 
+//Function to add a role to the roles table
 const addRole = () => {
   connection.query("SELECT * FROM role", (err, res) => {
     if (err) throw err;
@@ -138,6 +142,7 @@ const addRole = () => {
 
 }
 
+//Function to add a new department to the department table
 const addDepartment = () => {
   connection.query("SELECT * FROM department", (err, res) => {
     if (err) throw err;
@@ -164,6 +169,7 @@ const addDepartment = () => {
   });
 }
 
+//Function to add a new employee to the employee table
 const addEmployee = () => {
   connection.query("SELECT * FROM employee", (err, res) => {
     if (err) throw err;
@@ -225,8 +231,43 @@ const addEmployee = () => {
 
 }
 
+//Function to update the role of an employee in the employee table
+const updateRole = () => [
+  connection.query("SELECT * FROM employee", (err, res) => {
+    if (err) throw err;
+    inquirer. prompt ([
+      {
+        type: "list",
+        name: "empupdate",
+        message: "Which employee's role would you like to update?",
+        choices() {
+          const choiceArray = [];
+          res.forEach(({ first_name, last_name, id }) => {
+            choiceArray.push({name: first_name + " " + last_name, value: id});
+          });
+          return choiceArray;
+        },
+      },
+      {
+        type: "list",
+        name: "newrole",
+        message: "Which role would you like to assign to this employee?",
+        choices: getRole()
+      },
+    ]).then(function (answer) {
+      let updatedRole = {role_id: answer.empupdate}
+      connection.query("INSERT INTO employee SET ?", updatedRole, function (err, data) {
+        if (err) throw err;
+        viewEmployees();
+      });
+    });
+  })
+]
+
+//Array for roles
 let rolesArray = [];
 
+//Get the information from the roles table and pass it into the function above
 const getRole = () => {
   connection.query('SELECT * FROM role', function (err, res) {
     if (err) throw (err)
@@ -237,7 +278,10 @@ const getRole = () => {
   return rolesArray;
 }
 
+
+//Array for departments
 let departmentArray = [];
+
 
 const getDepartment = () => {
   connection.query('SELECT * FROM department', function (err, res) {
@@ -248,3 +292,4 @@ const getDepartment = () => {
   })
   return departmentArray;
 }
+
