@@ -11,11 +11,14 @@ const connection = mysql.createConnection({
   // Your username
   user: 'root',
 
-  // Be sure to update with your own MySQL password!
+  //Password
   password: 'HuxleyRoslyn4053!',
+
+  //Database
   database: 'employeesDB',
 });
 
+//Establish a connection, check for an error, and run the menu function
 connection.connect((err) => {
   if (err) throw err;
   menu();
@@ -23,17 +26,20 @@ connection.connect((err) => {
 
 //Main menu function, called automatically, asks people what they want to do
 const menu = () => {
+  //Start inquirer
   inquirer
     .prompt([
+      //initial question
       {
         name: 'options',
         type: 'list',
         message: 'What would you like to do?',
-        choices: ['View Employees', 'View Departments', 'View Roles', 'Add Role', 'Add Department', 'Add Employee', 'Update Employee Roles', 'Exit']
+        choices: ['View Employees', 'View Departments', 'View Roles', 'View Employees by Manager', 'Add Role', 'Add Department', 'Add Employee', 'Update Employee Roles', 'Exit']
       },
     ])
     .then((answer) => {
       console.log(answer.options)
+      //Call the functions based on which option the user chooses
       switch (answer.options) {
         case 'View Employees':
           viewEmployees();
@@ -45,6 +51,10 @@ const menu = () => {
 
         case 'View Roles':
           viewRole();
+          break;
+
+        case 'View Employees by Manager':
+          viewByManager();
           break;
 
         case 'Add Role':
@@ -62,7 +72,7 @@ const menu = () => {
         case 'Update Employee Roles':
           updateRole();
           break;
-        
+        //If the choice is "exit," terminate the connection (while still exhibiting good manners and thanking the user for using the program)
         case 'Exit':
           console.log(`Thank you very much.`);
           connection.end();
@@ -72,40 +82,87 @@ const menu = () => {
 
 //Function to view the employees
 const viewEmployees = () => {
+  //Establish a connection, check for an error
   connection.query('SELECT * FROM employee', (err, data) => {
     if (err) throw err;
+    //Print the data in the console as a table
     console.table(data);
+    //Call the menu function again so that the options display again
     menu();
   })
 }
 
 //Function to view the departments
 const viewDepartment = () => {
+  //Establish a connection, check for an error
   connection.query('SELECT name FROM department', (err, data) => {
     if (err) throw err;
+    //Print the data in the console as a table
     console.table(data);
+    //Call the menu function again so that the options display again
     menu();
   })
 }
 
 //Function to view the roles
 const viewRole = () => {
+  //Establish a connection, check for an error
   connection.query('SELECT id, title, salary, department_id FROM role', (err, data) => {
     if (err) throw err;
+    //Print the data in the console as a table
     console.table(data);
+    //Call the menu function again so that the options display again
     menu();
+  })
+}
+
+//SELECT * FROM employees WHERE manager_id = ?, [manager_id = null]
+const viewByManager = async () => {
+  connection.query("SELECT * FROM employee", (err, res) => {
+    if (err) throw err;
+    inquirer.prompt([
+      {
+        type: "list",
+        name: "manager",
+        message: "Which manager's employees would you like to view?",
+        //Get the options for the manager
+        choices() {
+          //Empty array for the choices
+          const choiceArray = [];
+          //Get the first name, last name, and id from the table
+          // console.log(res);
+          res.forEach(({ first_name, last_name, id, manager_id }) => {
+            if (!manager_id) {
+              //push the data into the array 
+              choiceArray.push({ name: first_name + " " + last_name, value: id });
+            }
+          });
+          return choiceArray;
+        },
+      },
+    ]).then(function (answer){
+      connection.query("SELECT * FROM employee WHERE manager_id = ?", [answer.manager], function (err, res){
+        if (err) throw (err)
+        console.table(res);
+        menu();
+      })
+    }
+    )
   })
 }
 
 //Function to add a role to the roles table
 const addRole = () => {
+  //Establish a connection, check for an error
   connection.query("SELECT * FROM role", (err, res) => {
     if (err) throw err;
+    //inquirer prompt
     inquirer.prompt([
       {
         type: "input",
         name: "title",
         message: "Please enter the role's title.",
+        //validation to ensure something is entered
         validate: data => {
           if (data !== "") {
             return true
@@ -117,6 +174,7 @@ const addRole = () => {
         type: "input",
         name: "salary",
         message: "Please enter the role's salary.",
+        //validation to ensure something is entered
         validate: data => {
           if (data !== "") {
             return true
@@ -128,13 +186,18 @@ const addRole = () => {
         type: "list",
         name: "department",
         message: "Please choose what department the role is from.",
+        //call the get department function in order to get the choices
         choices: getDepartment()
       },
     ]).then(function (answer) {
+      //Define an object and get the index of the answer to the department queston, then increment that so that it matches the ID
       let deptId = getDepartment().indexOf(answer.department) + 1;
+      //Define an object new role and pass in the answers from the first two questions, and the object defined as deptId
       let newRole = { title: answer.title, salary: answer.salary, department_id: deptId }
+      //Insert the data from the newRole object into the role table
       connection.query("INSERT INTO role SET ?", newRole, function (err, data) {
         if (err) throw err;
+        //Call the view role function again in order to display the table, and run the menu function again
         viewRole();
       });
 
@@ -146,14 +209,17 @@ const addRole = () => {
 
 //Function to add a new department to the department table
 const addDepartment = () => {
+  //Establish a connection, then check for an error
   connection.query("SELECT * FROM department", (err, res) => {
     if (err) throw err;
+    //Print the response from the connection query so that users can see what departments are already there
     console.table(res);
     inquirer.prompt([
       {
         type: "input",
         name: "deptname",
         message: "What would you like the name of the department to be?",
+        //Validation
         validate: data => {
           if (data !== "") {
             return true
@@ -162,9 +228,11 @@ const addDepartment = () => {
         }
       },
     ]).then(function (answer) {
+      //define object and pass in the answers for name
       let newDept = { name: answer.deptname }
       connection.query("INSERT INTO department SET ?", newDept, function (err, data) {
         if (err) throw err;
+        //call the view department function so that it displays the table and runs the menu function again
         viewDepartment();
       });
     });
@@ -173,6 +241,7 @@ const addDepartment = () => {
 
 //Function to add a new employee to the employee table
 const addEmployee = () => {
+  //Establish connectoin, check for an error
   connection.query("SELECT * FROM employee", (err, res) => {
     if (err) throw err;
     inquirer.prompt([
@@ -202,13 +271,17 @@ const addEmployee = () => {
         type: "list",
         name: "manager",
         message: "Who shall the employee's manager be?",
+        //Get the options for the manager
         choices() {
+          //Empty array for the choices
           const choiceArray = [];
-          res.forEach(({ first_name, last_name, id }) => {
-            if (id !== "NULL") {
-            choiceArray.push({name: first_name + " " + last_name, value: id});
+          //Get the first name, last name, and id from the table
+          // console.log(res);
+          res.forEach(({ first_name, last_name, id, manager_id }) => {
+            if (!manager_id) {
+              //push the data into the array 
+              choiceArray.push({ name: first_name + " " + last_name, value: id });
             }
-            else console.log(`${first_name} has an ID = Null`)
           });
           return choiceArray;
         },
@@ -237,7 +310,7 @@ const addEmployee = () => {
 const updateRole = () => {
   connection.query("SELECT * FROM employee", (err, res) => {
     if (err) throw err;
-    inquirer. prompt ([
+    inquirer.prompt([
       {
         type: "list",
         name: "empUpdate",
@@ -245,7 +318,7 @@ const updateRole = () => {
         choices() {
           const choiceArray = [];
           res.forEach(({ first_name, last_name, id }) => {
-            choiceArray.push({name: first_name + " " + last_name, value: id});
+            choiceArray.push({ name: first_name + " " + last_name, value: id });
           });
           return choiceArray;
         },
@@ -257,12 +330,14 @@ const updateRole = () => {
         choices: getUpRole()
       },
     ]).then(function (answer) {
-      console.log(answer.newRole);
-      console.log(answer.empUpdate);
-      connection.query("UPDATE employee SET role_id = ? WHERE id = ?", [answer.newRole, answer.empupdate])
-      .then (viewEmployees())
+      // console.log(answer.newRole);
+      // console.log(answer.empUpdate);
+      connection.query("UPDATE employee SET role_id = ? WHERE id = ?", [answer.newRole, answer.empUpdate], function (err, data) {
+        if (err) throw err;
+        viewEmployees();
+      });
     });
-  
+
   })
 }
 
@@ -273,7 +348,7 @@ let rolesArray = [];
 const getRole = () => {
   connection.query('SELECT * FROM role', function (err, res) {
     if (err) throw (err)
-    for (let i =0; i < res.length; i++) {
+    for (let i = 0; i < res.length; i++) {
       rolesArray.push(res[i].title);
     }
   })
@@ -286,7 +361,7 @@ const getUpRole = () => {
   connection.query('SELECT * FROM role', function (err, res) {
     if (err) throw (err)
     res.forEach(({ title, id }) => {
-      updatedRolesArray.push({name: title, value: id});
+      updatedRolesArray.push({ name: title, value: id });
     });
   })
   return updatedRolesArray;
@@ -306,4 +381,3 @@ const getDepartment = () => {
   })
   return departmentArray;
 }
-
