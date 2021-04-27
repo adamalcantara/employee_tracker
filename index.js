@@ -34,7 +34,7 @@ const menu = () => {
         name: 'options',
         type: 'list',
         message: 'What would you like to do?',
-        choices: ['View Employees', 'View Departments', 'View Roles', 'View Employees by Manager', 'Add Role', 'Add Department', 'Add Employee', 'Update Employee Roles', 'Update Employee Manager', 'Exit']
+        choices: ['View Employees', 'View Departments', 'View Roles', 'View Employees by Manager', 'Add Role', 'Add Department', 'Add Employee', 'Update Employee Roles', 'Update Employee Manager', 'Delete Employee', 'Delete Role', 'Delete Department', 'Exit']
       },
     ])
     .then((answer) => {
@@ -75,6 +75,18 @@ const menu = () => {
 
         case 'Update Employee Manager':
           updateEmpMgr();
+          break;
+        
+        case 'Delete Employee':
+          removeEmployee();
+          break;
+
+        case 'Delete Role':
+          removeRole();
+          break;
+
+        case 'Delete Department':
+          removeDept();
           break;
         //If the choice is "exit," terminate the connection (while still exhibiting good manners and thanking the user for using the program)
         case 'Exit':
@@ -383,6 +395,81 @@ const updateEmpMgr = () => {
       });
     });
 
+  })
+}
+
+const removeEmployee = () => {
+  connection.query("SELECT * FROM employee", (err, res) => {
+    if (err) throw err;
+    inquirer.prompt([
+      {
+        name: "deleteEmployee",
+        type: "list",
+        message: "Which employee would you like to delete?",
+        choices() {
+          const empArray = [];
+          res.forEach(({ first_name, last_name, id }) => {
+            empArray.push({ name: first_name + " " + last_name, value: id });
+          });
+          return empArray;
+        },
+      },
+    ]).then((answer) => {
+      connection.query("DELETE FROM employee WHERE id = ?", answer.deleteEmployee, function (err, data) {
+        if (err) throw err;
+        viewEmployees();
+      });
+    });
+  })
+}
+
+const removeRole = () => {
+  connection.query("SELECT * FROM role", (err, res) => {
+    if (err) throw err;
+    inquirer.prompt([
+      {
+        name: "deleteRole",
+        type: "list",
+        message: "Which role would you like to delete?",
+        choices() {
+          const empArray = [];
+          res.forEach(({ title, id }) => {
+            empArray.push({ name: title, value: id });
+          });
+          return empArray;
+        },
+      },
+    ]).then((answer) => {
+      connection.query("DELETE FROM role WHERE id = ?", answer.deleteRole, function (err, data) {
+        if (err) throw err;
+        viewRole();
+      });
+    });
+  })
+}
+
+const removeDept = () => {
+  connection.query("SELECT * FROM department", (err, res) => {
+    if (err) throw err;
+    inquirer.prompt([
+      {
+        name: "deleteDept",
+        type: "list",
+        message: "Which department would you like to delete?",
+        choices() {
+          const deptArray = [];
+          res.forEach(({ name, id }) => {
+            deptArray.push({ name: name, value: id });
+          });
+          return deptArray;
+        },
+      },
+    ]).then((answer) => {
+      connection.query("DELETE FROM department WHERE id = ?", answer.deleteDept, function (err, data) {
+        if (err) throw err;
+        viewDepartment();
+      });
+    });
   })
 }
 
