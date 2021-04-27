@@ -34,7 +34,7 @@ const menu = () => {
         name: 'options',
         type: 'list',
         message: 'What would you like to do?',
-        choices: ['View Employees', 'View Departments', 'View Roles', 'View Employees by Manager', 'Add Role', 'Add Department', 'Add Employee', 'Update Employee Roles', 'Exit']
+        choices: ['View Employees', 'View Departments', 'View Roles', 'View Employees by Manager', 'Add Role', 'Add Department', 'Add Employee', 'Update Employee Roles', 'Update Employee Manager', 'Exit']
       },
     ])
     .then((answer) => {
@@ -71,6 +71,10 @@ const menu = () => {
 
         case 'Update Employee Roles':
           updateRole();
+          break;
+
+        case 'Update Employee Manager':
+          updateEmpMgr();
           break;
         //If the choice is "exit," terminate the connection (while still exhibiting good manners and thanking the user for using the program)
         case 'Exit':
@@ -340,6 +344,48 @@ const updateRole = () => {
 
   })
 }
+
+//Function to update the manager  of an employee in the employee table
+const updateEmpMgr = () => {
+  connection.query("SELECT * FROM employee", (err, res) => {
+    if (err) throw err;
+    inquirer.prompt([
+      {
+        type: "list",
+        name: "empUpdate",
+        message: "Which employee's manager would you like to update?",
+        choices() {
+          const empArray = [];
+          res.forEach(({ first_name, last_name, id }) => {
+            empArray.push({ name: first_name + " " + last_name, value: id });
+          });
+          return empArray;
+        },
+      },
+      {
+        type: "list",
+        name: "mgrUpdate",
+        message: "Which manager would you like assign to the seleced employee?",
+        choices() {
+          const mgrArray = [];
+          res.forEach(({ first_name, last_name, id }) => {
+            mgrArray.push({ name: first_name + " " + last_name, value: id });
+          });
+          return mgrArray;
+        },
+      },
+    ]).then(function (answer) {
+      // console.log(answer.newRole);
+      // console.log(answer.empUpdate);
+      connection.query("UPDATE employee SET manager_id = ? WHERE id = ?", [answer.mgrUpdate, answer.empUpdate], function (err, data) {
+        if (err) throw err;
+        viewEmployees();
+      });
+    });
+
+  })
+}
+
 
 //Array for roles
 let rolesArray = [];
