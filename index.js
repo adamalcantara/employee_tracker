@@ -367,10 +367,14 @@ const updateEmpMgr = () => {
         name: "empUpdate",
         message: "Which employee's manager would you like to update?",
         choices() {
+          //empty array into which we will push the employees
           const empArray = [];
+          //Destructure the employees
           res.forEach(({ first_name, last_name, id }) => {
+            //Push the data into the array
             empArray.push({ name: first_name + " " + last_name, value: id });
           });
+          //Return the array so that the user will see it
           return empArray;
         },
       },
@@ -379,18 +383,25 @@ const updateEmpMgr = () => {
         name: "mgrUpdate",
         message: "Which manager would you like assign to the seleced employee?",
         choices() {
+          //empty array into which we will push the managers
           const mgrArray = [];
+          //Destructure the managers
           res.forEach(({ first_name, last_name, id }) => {
+            //Push the data into the array
             mgrArray.push({ name: first_name + " " + last_name, value: id });
           });
+          //Return the array so it's visible to the user
           return mgrArray;
         },
       },
     ]).then(function (answer) {
       // console.log(answer.newRole);
       // console.log(answer.empUpdate);
+
+      //Connection query, update the employee manager_id where the employee's ID matches the answer above
       connection.query("UPDATE employee SET manager_id = ? WHERE id = ?", [answer.mgrUpdate, answer.empUpdate], function (err, data) {
         if (err) throw err;
+        //Call the employee function again to pull up the chart, and run the menu function again
         viewEmployees();
       });
     });
@@ -398,50 +409,65 @@ const updateEmpMgr = () => {
   })
 }
 
+//Function to remove an employee from the employee chart
 const removeEmployee = () => {
+  //Connection query, get all from employee chart, check for error
   connection.query("SELECT * FROM employee", (err, res) => {
     if (err) throw err;
+    //Inquirer questions
     inquirer.prompt([
       {
         name: "deleteEmployee",
         type: "list",
         message: "Which employee would you like to delete?",
         choices() {
+          //Empty array to push into
           const empArray = [];
+          //Destructure data from employee table
           res.forEach(({ first_name, last_name, id }) => {
+            //Push the data into the empty array
             empArray.push({ name: first_name + " " + last_name, value: id });
           });
           return empArray;
         },
       },
     ]).then((answer) => {
+      //Connection query again, delete from employee where ID = answer above
       connection.query("DELETE FROM employee WHERE id = ?", answer.deleteEmployee, function (err, data) {
         if (err) throw err;
+        //Call the employee function again to pull up the chart, and run the menu function again
         viewEmployees();
       });
     });
   })
 }
 
+//Function to remove a role
 const removeRole = () => {
+  //Connection query, get all data from role table, check for error
   connection.query("SELECT * FROM role", (err, res) => {
     if (err) throw err;
+    //Inquirer questions
     inquirer.prompt([
       {
         name: "deleteRole",
         type: "list",
         message: "Which role would you like to delete?",
         choices() {
+          //Empty array into which we can push the data
           const empArray = [];
+          //Destructure the data from the table
           res.forEach(({ title, id }) => {
+            //Push that data into the empty array
             empArray.push({ name: title, value: id });
           });
           return empArray;
         },
       },
     ]).then((answer) => {
+      //Delete from role where ID is equal to the answer above
       connection.query("DELETE FROM role WHERE id = ?", answer.deleteRole, function (err, data) {
-        if (err) throw err;
+        if (err) console.log("You cannot delete this Role, as there are Employees that are contained within it.");
         viewRole();
       });
     });
@@ -449,6 +475,7 @@ const removeRole = () => {
 }
 
 const removeDept = () => {
+  //connection query, check for error
   connection.query("SELECT * FROM department", (err, res) => {
     if (err) throw err;
     inquirer.prompt([
@@ -457,16 +484,21 @@ const removeDept = () => {
         type: "list",
         message: "Which department would you like to delete?",
         choices() {
+          //Empty array into which we can push the data
           const deptArray = [];
+          //Destructure the data from the table
           res.forEach(({ name, id }) => {
+            //Push that data into the empty array
             deptArray.push({ name: name, value: id });
           });
           return deptArray;
         },
       },
     ]).then((answer) => {
+      // console.log(answer.deleteDept);
+      //Delete from the department table where the id = the answer from above
       connection.query("DELETE FROM department WHERE id = ?", answer.deleteDept, function (err, data) {
-        if (err) throw err;
+        if (err) console.log("You cannot delete this Department, as there are Roles that are contained within it.");
         viewDepartment();
       });
     });
@@ -490,6 +522,7 @@ const getRole = () => {
 
 let updatedRolesArray = [];
 
+//Function to get updated roles
 const getUpRole = () => {
   connection.query('SELECT * FROM role', function (err, res) {
     if (err) throw (err)
